@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Coming Soon</title>
+  <style>
+    body, html {
+      display: block;
+      padding: 0;
+      margin: 0;
+      width: 100%;
+      position: relative;
+      height: 100%;
+    }
+    body {
+      font-family: "Arial", sans-serif;
+    }
+    section {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle, #FBB600, #DA5900);
+    }
+    #beerCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 100;
+    }
+    .coming_content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      -webkit-transform: translate(-50%, -50%);
+              transform: translate(-50%, -50%);
+      width: 70%;
+      margin: 0 auto;
+      color: white;
+      text-align: center;
+      z-index: 101;
+    }
+    .coming_content h1 {
+      font-size: 5.625em;
+      margin: 0;
+      letter-spacing: 2px;
+      text-align: center;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <section>
+    <canvas id='beerCanvas'></canvas>
+    <div class="coming_content">
+      <h1>Coming Soon</h1>
+    </div>
+  </section>
+</body>
+<script>
+  // fork https://codepen.io/rickzanutta/pen/eJKpZq
+!(function(){
+  function Particle() {
+    this.reset();
+  }
+  Particle.prototype.tick = function(time){
+    this.x = this.baseX + (Math.sin(time / this.fraction) * this.range - (this.range/2));
+  }
+  Particle.prototype.reset = function(){
+    this.x = Math.random() * canvas.width;
+    this.y = canvas.height + Math.random() * 300;
+    this.baseX = this.x;
+    this.speed = 1 + Math.random() * 0.8;
+    this.radius = Math.random() * 3;
+    this.opacity = (Math.random() * 100) / 1000;
+    this.fraction = Math.random() * 1000 + 100;
+    this.range = Math.random() * 20 + 10;
+  }
+
+  var canvas = document.getElementById('beerCanvas');
+  var ctx = canvas.getContext('2d');
+  var particles = [];
+  var particleCount = 320;
+
+  for (var i = 0; i < particleCount; i++) {
+    particles.push(new Particle());
+  }
+
+  function loop() {
+    requestAnimationFrame(loop);
+    draw();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.globalCompositeOperation = 'lighter';
+    var time = Date.now()
+    for (var i = 0; i < particles.length; i++) {
+      var p = particles[i];
+      ctx.beginPath();
+      ctx.fillStyle = 'rgba(255,255,255,' + p.opacity + ')';
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2, false);
+      ctx.fill();
+      p.tick(time);
+      p.y -= p.speed;
+      if (p.y <= -10) {
+        // particles[i] = new Particle();
+        p.reset();
+      }
+    }
+  }
+  loop();
+})();
+</script>
+</html>
