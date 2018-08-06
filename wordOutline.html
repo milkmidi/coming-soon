@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Coming Soon</title>
+  <style>
+    *{
+      margin:0;
+      padding:0;
+    }
+    body{
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <canvas id="canvas"></canvas>
+  </div>
+  <script>
+    var WORDS = ['Coming', 'Soon'];
+    var index = 0;
+    var canvas = document.getElementById('canvas');
+    var context = canvas.getContext('2d');
+    var timeoutId = -1;
+    function draw(){
+      var i = 0.5;
+      var text = WORDS[index];
+      var canvas2 = canvas.cloneNode();
+      var context2 = canvas2.getContext('2d');
+      var width = canvas.width;
+      var height = canvas.height;
+      context.font = context2.font = '300px Helvetica Neue';
+      context.textAlign = context2.textAlign = 'center';
+      context.lineJoin = context2.lineJoin = 'round';
+
+      context.clearRect(0, 0, width, height);
+      context.fillText(text, width / 2, height / 2 + 100);
+
+      index += 1;
+      index %= WORDS.length;
+
+      if (timeoutId != -1) {
+        clearInterval(timeoutId);
+      }
+      timeoutId = setInterval(() => {
+        if (++i > text.length * 25) {
+          draw();
+          return;
+        }
+        context2.save();
+        context2.clearRect(0, 0, width, height);
+        context2.lineWidth = i & 1 ? i * 5 + 3 : i * 5;
+        context2.strokeStyle = i & 1 ? 'white' : 'black';
+        context2.strokeText(text, width / 2, height / 2 + 100);
+        context2.restore();
+        context2.drawImage(canvas, 0, 0);
+        context.drawImage(canvas2, 0, 0);
+      },20)
+    }
+    var resizeHander = function (){
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeHander);
+    resizeHander();
+    draw();
+  </script>
+</body>
+</html>
