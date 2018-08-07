@@ -7,6 +7,8 @@ var Scratch = (function (){
     return Math.atan2(point2.x - point1.x, point2.y - point1.y);
   }
 
+  var AUTO_DRAW_POSITION = [{"x":253,"y":103.5},{"x":249,"y":111.5},{"x":248,"y":117.5},{"x":247,"y":122.5},{"x":251,"y":125.5},{"x":258,"y":128.5},{"x":263,"y":131.5},{"x":264,"y":133.5},{"x":264,"y":136.5},{"x":263,"y":140.5},{"x":260,"y":145.5},{"x":257,"y":150.5},{"x":254,"y":153.5},{"x":251,"y":156.5},{"x":251,"y":157.5},{"x":250,"y":157.5},{"x":250,"y":158.5},{"x":249,"y":158.5}];
+
   function Scratch(canvas/*HTMLCanvasElement*/, coverImgURL/*string*/, completeCallback){
     var self = this;
     this.canvas = canvas;
@@ -14,11 +16,7 @@ var Scratch = (function (){
     this.supportTouch = ('ontouchstart' in window);
     this.isDrawing = false;
     this.lastPoint = {x:0,y:0};
-    var context = canvas.getContext('2d');
-    this.context = context;
-
-    
-
+    this.context = canvas.getContext('2d');
     this.handleMouseDown = this.handleMouseDown.bind(this);
     this.handleMouseMove = this.handleMouseMove.bind(this);
     this.handleMouseUp = this.handleMouseUp.bind(this);
@@ -34,12 +32,13 @@ var Scratch = (function (){
     img.src = coverImgURL;
     img.onload = function (){
       document.querySelector('.scratch__result').style.visibility = 'visible';
+      var ctx = self.context;
       var w = img.width;
       var h = img.height;
       
-      canvas.width = w;
-      canvas.height = h;
-      context.drawImage(img, 0, 0);
+      self.canvas.width = w;
+      self.canvas.height = h;
+      ctx.drawImage(img, 0, 0);
 
       if (self.supportTouch){
         canvas.addEventListener('touchstart', self.handleMouseDown);
@@ -50,6 +49,9 @@ var Scratch = (function (){
         canvas.addEventListener('mousemove', self.handleMouseMove);
         canvas.addEventListener('mouseup', self.handleMouseUp);
       }
+
+
+      self.autoDraw(AUTO_DRAW_POSITION);
     };
   }
   Scratch.prototype.getMousePosition = function (event) {
@@ -72,11 +74,42 @@ var Scratch = (function (){
       return;
     }
     var position = this.getMousePosition(event);
+    this.draw(position);
+    var progress = this.getFilledInPixels(32);
+    if(progress > 0.5 && this.completeCallback){
+      this.completeCallback.call(this);
+    } 
+  }
+  Scratch.prototype.autoDraw = function (positoins){
+    this.lastPoint = positoins[0];
+    var self = this;
+    var index = 0;
+    var fps = 40;
+    var now;
+    var then = Date.now();
+    var interval = 1000/fps;
+    var delta;
+    var animationFrameID = -1;
+    var d = function (){
+      animationFrameID = requestAnimationFrame(d);
+      now = Date.now();
+      delta = now - then;
+      if (delta > interval) {
+        then = now - (delta % interval);
+        self.draw(positoins[index]);
+        index++;
+        if(index >= positoins.length-1){
+          cancelAnimationFrame(animationFrameID);
+        }
+      }
+    }
+    setTimeout(d, 500);
+  }
+  Scratch.prototype.draw = function (position){
     var dist = distanceBetween(this.lastPoint, position);
     var angle = angleBetween(this.lastPoint, position);
     var ctx = this.context;
     var x,y;
-  
     for (var i = 0; i < dist; i += 1) {
       x = this.lastPoint.x + (Math.sin(angle) * i);
       y = this.lastPoint.y + (Math.cos(angle) * i);
@@ -84,11 +117,6 @@ var Scratch = (function (){
       ctx.drawImage(this.brushImg, x - 40, y - 25)
     }
     this.lastPoint = position;
-    var progress = this.getFilledInPixels(32);
-    if(progress > 0.5 && this.completeCallback){
-      this.completeCallback.call(this);
-      // this.destory();
-    } 
   }
   Scratch.prototype.handleMouseUp = function (event){
     this.isDrawing = false;
