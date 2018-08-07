@@ -1,7 +1,8 @@
-var Observable = Rx.Observable;
+var { Observable } = Rx;
 const DECAY = 0.9;
 const GRAVITY = 1;
 var offsetX = 0;
+
 class Particle extends PIXI.Sprite {
   constructor(baseTexture, x, y, size) {
     const texture = new PIXI.Texture(baseTexture, new PIXI.Rectangle(x, y, size, size));
@@ -10,7 +11,6 @@ class Particle extends PIXI.Sprite {
     this.vx = 0;
     this.vy = 0;
     this.onFloor= false;
-    this.offsetX = 0;
   }
   setBasePosition(x, y) {
     this.x = x;
@@ -98,10 +98,8 @@ class App {
     this.app.ticker.add(this.onTick);
 
 
-    const IMAGE_WIDTH = img.width;
-    const IMAGE_HEIGHT = img.height;
+    const {width:IMAGE_WIDTH, height:IMAGE_HEIGHT} = img;
     const CUBE_SIZE = 4;
-
     const C = IMAGE_WIDTH / CUBE_SIZE;
     const R = IMAGE_HEIGHT / CUBE_SIZE;
     const COUNT = R * C;
@@ -143,21 +141,24 @@ class App {
       })
   }
   registerEvent() {
-    const mousedown = Observable.fromEvent(this.view, 'mousedown');
-    const mousemove = Observable.fromEvent(document, 'mousemove');
-    const mouseup = Observable.fromEvent(document, 'mouseup');
-
+    var supportTouch = ('ontouchstart' in window);
+    const mousedown = Observable.fromEvent(this.view, supportTouch ? 'touchstart' :'mousedown');
+    const mousemove = Observable.fromEvent(document, supportTouch ? 'touchmove' :'mousemove');
+    const mouseup = Observable.fromEvent(document, supportTouch ? 'touchend' :'mouseup');
     const mousedrag = mousedown.flatMap(() => mousemove.map((e) => {
       e.preventDefault();
-      return {
-        left: e.moveMomentX,
-        top: e.moveMomentY,
-      };
+      return supportTouch 
+        ? {
+            x: e.changedTouches[0].clientX,
+            y: e.changedTouches[0].clientY,
+          }
+        : {
+            x: e.pageX,
+            y: e.pageY,
+        };
     }).takeUntil(mouseup));
-
-    this.mouseDragSubscribe = Observable.merge(mousedown, mousedrag).subscribe(() => {
-      const { x, y } = this.app.renderer.plugins.interaction.mouse.global;
-      this.smash(x, y);
+    this.mouseDragSubscribe = mousedrag.subscribe(({x,y}) => {
+      this.smash(x, y);      
     });
 
   }
@@ -165,7 +166,9 @@ class App {
     const stageX = x;
     const stageY = y;
     this.objectsArr.forEach((p) => {
-      const radius = Math.sqrt(Math.pow(p.x - stageX, 2) + Math.pow(p.y - stageY, 2));
+      var a = p.x - stageX;
+      var b = p.y - stageY;
+      const radius = Math.sqrt((a * a) + (b * b));
       if (radius < 40) {
         if (p.lock) {
           const vx = ((Math.random() * 10) - 5) * 4;

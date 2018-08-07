@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html>
 <head>
+  <title>Coming Soon</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Coming Soon</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css">
   <style>
     body, html {
       display: block;
@@ -34,10 +35,9 @@
     .coming_content {
       position: absolute;
       top: 50%;
-      left: 50%;
-      -webkit-transform: translate(-50%, -50%);
-              transform: translate(-50%, -50%);
-      width: 70%;
+      width: 100%;
+      -webkit-transform: translate(0%, -50%);
+              transform: translate(0%, -50%);
       margin: 0 auto;
       color: white;
       text-align: center;
@@ -61,7 +61,7 @@
   </section>
 </body>
 <script>
-  // fork https://codepen.io/rickzanutta/pen/eJKpZq
+// fork https://codepen.io/rickzanutta/pen/eJKpZq
 !(function(){
   function Particle() {
     this.reset();
