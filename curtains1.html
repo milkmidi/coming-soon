@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Coming Soon</title>
+  <script src="https://www.martin-laxenaire.fr/libs/curtainsjs/build/curtains.min.js"></script>
+  <style>
+    *{
+      padding:0;
+      margin:0;
+    }
+    body {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #canvas {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+    }
+    #page-wrap {
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #canvas {
+      height: 100vh;
+      width: 100vw;
+    }
+    .curtain {
+      position: absolute;
+      top: 5%;
+      right: 5%;
+      bottom: 5%;
+      left: 5%;
+    }
+    .curtain img {
+      display: none;
+    }
+  </style>
+  <script id="simple-plane-vs" type="x-shader/x-vertex">
+    #ifdef GL_ES
+    precision mediump float;
+    #endif
+
+    // default mandatory variables
+    attribute vec3 aVertexPosition;
+    attribute vec2 aTextureCoord;
+
+    uniform mat4 uMVMatrix;
+      uniform mat4 uPMatrix;
+
+    // custom variables
+    varying vec3 vVertexPosition;
+    varying vec2 vTextureCoord;
+
+    uniform float uTime;
+    uniform vec2 uResolution;
+    uniform vec2 uMousePosition;
+    uniform float uMouseMoveStrength;
+
+
+    void main() {
+
+      vec3 vertexPosition = aVertexPosition;
+
+      // get the distance between our vertex and the mouse position
+      float distanceFromMouse = distance(uMousePosition, vec2(vertexPosition.x, vertexPosition.y));
+
+      // calculate our wave effect
+      float waveSinusoid = cos(5.0 * (distanceFromMouse - (uTime / 75.0)));
+
+      // attenuate the effect based on mouse distance
+      float distanceStrength = (0.4 / (distanceFromMouse + 0.4));
+
+      // calculate our distortion effect
+      float distortionEffect = distanceStrength * waveSinusoid * uMouseMoveStrength;
+
+      // apply it to our vertex position
+      vertexPosition.z +=  distortionEffect / 15.0;
+      vertexPosition.x +=  (distortionEffect / 15.0 * (uResolution.x / uResolution.y) * (uMousePosition.x - vertexPosition.x));
+      vertexPosition.y +=  distortionEffect / 15.0 * (uMousePosition.y - vertexPosition.y);
+
+         gl_Position = uPMatrix * uMVMatrix * vec4(vertexPosition, 1.0);
+
+         // varyings
+         vTextureCoord = aTextureCoord;
+         vVertexPosition = vertexPosition;
+    }
+  </script>
+  <script id="simple-plane-fs" type="x-shader/x-fragment">
+    #ifdef GL_ES
+    precision mediump float;
+    #endif
+
+    uniform float uTime;
+    uniform vec2 uResolution;
+    uniform vec2 uMousePosition;
+
+    varying vec3 vVertexPosition;
+    varying vec2 vTextureCoord;
+
+    uniform sampler2D simplePlaneTexture;
+
+
+    void main( void ) {
+
+      // get our texture coords
+      vec2 textureCoords = vec2(vTextureCoord.x, vTextureCoord.y);
+
+      // apply our texture
+      vec4 finalColor = texture2D(simplePlaneTexture, textureCoords);
+
+      // fake shadows based on vertex position along Z axis
+      finalColor.rgb -= clamp(-vVertexPosition.z, 0.0, 1.0);
+      // fake lights based on vertex position along Z axis
+      finalColor.rgb += clamp(vVertexPosition.z, 0.0, 1.0);
+
+      // handling premultiplied alpha (useful if we were using a png with transparency)
+      finalColor = vec4(finalColor.rgb * finalColor.a, finalColor.a);
+
+      gl_FragColor = finalColor;
+    }
+  </script>
+
+</head>
+<body>
+  <div id="page-wrap">
+    <div id="canvas"></div>
+    <div class="curtain" data-vs-id="simple-plane-vs" data-fs-id="simple-plane-fs">
+      <img src="./img/coming-soon-1000.png" data-sampler="simplePlaneTexture"/>
+    </div>
+  </div>
+
+<script>
+window.onload = function(){
+  var canvasContainer = document.getElementById("canvas");
+  var mousePosition = {
+    x: 0,
+    y: 0,
+  };
+  var mouseLastPosition = {
+    x: 0,
+    y: 0,
+  };
+  var mouseDelta = 0;
+  var webGLCurtain = new Curtains("canvas");
+  var planeElements = document.getElementsByClassName("curtain");
+  var pixelRatio = window.devicePixelRatio ? window.devicePixelRatio : 1.0;
+  var params = {
+    widthSegments: 20,
+    heightSegments: 20,
+    uniforms: {
+      resolution: { // resolution of our plane
+        name: "uResolution",
+        type: "2f", // notice this is an length 2 array of floats
+        value: [pixelRatio * planeElements[0].clientWidth, pixelRatio * planeElements[0].clientHeight],
+      },
+      time: { // time uniform that will be updated at each draw call
+        name: "uTime",
+        type: "1f",
+        value: 0,
+      },
+      mousePosition: { // our mouse position
+        name: "uMousePosition",
+        type: "2f", // again an array of floats
+        value: [mousePosition.x, mousePosition.y],
+      },
+      mouseMoveStrength: { // the mouse move strength
+        name: "uMouseMoveStrength",
+        type: "1f",
+        value: 0,
+      }
+    }
+  }
+  // create our plane
+  var simplePlane = webGLCurtain.addPlane(planeElements[0], params);
+  simplePlane.onReady(function() {
+    simplePlane.setPerspective(35);
+    var wrapper = document.getElementById("page-wrap");
+    wrapper.addEventListener("mousemove", function(e) {
+      handleMovement(e, simplePlane);
+    });
+    wrapper.addEventListener("touchmove", function(e) {
+      handleMovement(e, simplePlane);
+    });
+    // on resize, update the resolution uniform
+    window.onresize = function() {
+      simplePlane.uniforms.resolution.value = [pixelRatio * planeElements[0].clientWidth, pixelRatio * planeElements[0].clientHeight];
+    }
+  }).onRender(function() {
+    simplePlane.uniforms.time.value++;
+    simplePlane.uniforms.mouseMoveStrength.value = mouseDelta;
+    mouseDelta = Math.max(0, mouseDelta * 0.995);
+  });
+  // handle the mouse move event
+  function handleMovement(e, plane) {
+    if(mousePosition.x != -100000 && mousePosition.y != -100000) {
+      mouseLastPosition.x = mousePosition.x;
+      mouseLastPosition.y = mousePosition.y;
+    }
+    // touch event
+    if(e.targetTouches) {
+      mousePosition.x = e.targetTouches[0].clientX;
+      mousePosition.y = e.targetTouches[0].clientY;
+    } else {
+      mousePosition.x = e.clientX;
+      mousePosition.y = e.clientY;
+    }
+    var mouseCoords = plane.mouseToPlaneCoords(mousePosition.x, mousePosition.y);
+    plane.uniforms.mousePosition.value = [mouseCoords.x, mouseCoords.y];
+    if(mouseLastPosition.x && mouseLastPosition.y) {
+      var delta = Math.sqrt(Math.pow(mousePosition.x - mouseLastPosition.x, 2) + Math.pow(mousePosition.y - mouseLastPosition.y, 2)) / 30;
+      delta = Math.min(4, delta);
+      if(delta >= mouseDelta) {
+        mouseDelta = delta;
+        plane.uniforms.time.value = 0;
+      }
+    }
+  }
+}
+  </script>
+</body>
+</html>
