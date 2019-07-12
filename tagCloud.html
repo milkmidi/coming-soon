@@ -1,116 +1,116 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta charset="UTF-8">
-	<title>Coming Soon</title>	 
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/EaselJS/1.0.2/easeljs.min.js"></script>
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css">	
-	<style>
-		html,body{
-			width:100%;
-			height:100%;
-			overflow: hidden;
-		}
-	</style>
-	<script>
-	function init() {		
-		var canvas = document.getElementById("canvas");		
-		var stage = new createjs.Stage(canvas);	
-		stage.enableMouseOver(10);	
-		var CENTER_X = canvas.width / 2;
-		var CENTER_Y = canvas.height / 2;
-		var fl = 250;
-		var objArr = [];
-		var SIZE = 250;
-		var SIZE_HALF = SIZE / 2;
-		for (var i = 0; i < 16; i++) {
-			var text = new createjs.Text("COMING SOON", "24px Arial", "#777");					
-			text.on("rollover", function(event){				
-				this.color = '#ffffff'
-			});
-			text.on("rollout", function(event){				
-				this.color = '#777'
-			});
-			text.on("click", function(event){				
-				// console.log(this);
-			});
-			var hit = new createjs.Shape();
-			hit.graphics.beginFill("#000").drawRect(0, 0, text.getMeasuredWidth(), text.getMeasuredHeight());
-			text.hitArea = hit;
+  <meta charset="UTF-8">
+  <title>Coming Soon</title>	 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/EaselJS/1.0.2/easeljs.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css">	
+  <style>
+    html,body{
+      width:100%;
+      height:100%;
+      overflow: hidden;
+    }
+  </style>
+  <script>
+  function init() {		
+    var canvas = document.getElementById("canvas");
+    var stage = new createjs.Stage(canvas);
+    stage.enableMouseOver(10);
+    var CENTER_X = canvas.width / 2;
+    var CENTER_Y = canvas.height / 2;
+    var fl = 250;
+    var objArr = [];
+    var SIZE = 250;
+    var SIZE_HALF = SIZE / 2;
+    for (var i = 0; i < 16; i++) {
+      var text = new createjs.Text("COMING SOON", "24px Arial", "#777");
+      text.on("rollover", function(event){
+        this.color = '#ffffff'
+      });
+      text.on("rollout", function(event){
+        this.color = '#777'
+      });
+      text.on("click", function(event){
+        // console.log(this);
+      });
+      var hit = new createjs.Shape();
+      hit.graphics.beginFill("#000").drawRect(0, 0, text.getMeasuredWidth(), text.getMeasuredHeight());
+      text.hitArea = hit;
 
-			text.cursor = 'pointer';
-			text.xpos = Math.random() * SIZE - SIZE_HALF;
-			text.ypos = Math.random() * SIZE - SIZE_HALF;
-			text.zpos = Math.random() * SIZE - SIZE_HALF;			
-			stage.addChild(text);			
-			objArr.push(text);
-		}
+      text.cursor = 'pointer';
+      text.xpos = Math.random() * SIZE - SIZE_HALF;
+      text.ypos = Math.random() * SIZE - SIZE_HALF;
+      text.zpos = Math.random() * SIZE - SIZE_HALF;
+      stage.addChild(text);
+      objArr.push(text);
+    }
 
-		if (createjs.Touch.isSupported()) {
-			createjs.Touch.enable(stage);
-		}
-		
-		createjs.Ticker.timingMode = createjs.Ticker.RAF;
-		createjs.Ticker.addEventListener("tick", function(){
-			var angleX = ( stage.mouseY - CENTER_Y) * -.0001;
-			var angleY = ( stage.mouseX - CENTER_X) * -.0001;
-			objArr.forEach(function (displayObject){
-				rotateX(displayObject, angleX);
-				rotateY(displayObject, angleY);
-				doPerspective(displayObject);
-			});
-			stage.update();
-		});
+    if (createjs.Touch.isSupported()) {
+      createjs.Touch.enable(stage);
+    }
+    
+    createjs.Ticker.timingMode = createjs.Ticker.RAF;
+    createjs.Ticker.addEventListener("tick", function(){
+      var angleX = ( stage.mouseY - CENTER_Y) * -.0001;
+      var angleY = ( stage.mouseX - CENTER_X) * -.0001;
+      objArr.forEach(function (displayObject){
+        rotateX(displayObject, angleX);
+        rotateY(displayObject, angleY);
+        doPerspective(displayObject);
+      });
+      stage.update();
+    });
 
-		var resize = function (){
-			canvas.width = window.innerWidth;
-			canvas.height = window.innerHeight;
-			CENTER_X = canvas.width / 2;
-			CENTER_Y = canvas.height / 2;
-		}
-		resize();
-		window.addEventListener('resize', resize)
-		function rotateX( obj , angleX){
-			var sinX = Math.sin(angleX);
-			var cosX = Math.cos(angleX);		
-			
-			var y1 = obj.ypos * cosX - obj.zpos * sinX;
-			var z1 = obj.zpos * cosX + obj.ypos * sinX;
-			
-			obj.ypos = y1;
-			obj.zpos = z1;				
-		}
-		function rotateY(obj, angleY){
-			var sinY = Math.sin(angleY);
-			var cosY = Math.cos(angleY);			
-			
-			var x1 = obj.xpos * cosY - obj.zpos * sinY;
-			var z1 = obj.zpos * cosY + obj.xpos * sinY;
-			
-			obj.xpos = x1;
-			obj.zpos = z1;
-		}
-		function doPerspective( obj){
-			if( obj.zpos > -fl ){
-				var scale = fl / (fl + obj.zpos);
-				obj.scaleX = obj.scaleY = scale;
-				obj.x = CENTER_X + obj.xpos * scale;
-				obj.y = CENTER_Y + obj.ypos * scale;
-				obj.visible = true;				
-			}
-			else {
-				obj.visible = false;
-			}
-			stage.sortChildren(sortZ);
-		}
-		function sortZ( a , b){		
-			return (a.zpos - b.zpos) * -1;		
-		}
-	}
+    var resize = function (){
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      CENTER_X = canvas.width / 2;
+      CENTER_Y = canvas.height / 2;
+    }
+    resize();
+    window.addEventListener('resize', resize)
+    function rotateX( obj , angleX){
+      var sinX = Math.sin(angleX);
+      var cosX = Math.cos(angleX);
+      
+      var y1 = obj.ypos * cosX - obj.zpos * sinX;
+      var z1 = obj.zpos * cosX + obj.ypos * sinX;
+      
+      obj.ypos = y1;
+      obj.zpos = z1;
+    }
+    function rotateY(obj, angleY){
+      var sinY = Math.sin(angleY);
+      var cosY = Math.cos(angleY);
+      
+      var x1 = obj.xpos * cosY - obj.zpos * sinY;
+      var z1 = obj.zpos * cosY + obj.xpos * sinY;
+      
+      obj.xpos = x1;
+      obj.zpos = z1;
+    }
+    function doPerspective( obj){
+      if( obj.zpos > -fl ){
+        var scale = fl / (fl + obj.zpos);
+        obj.scaleX = obj.scaleY = scale;
+        obj.x = CENTER_X + obj.xpos * scale;
+        obj.y = CENTER_Y + obj.ypos * scale;
+        obj.visible = true;
+      }
+      else {
+        obj.visible = false;
+      }
+      stage.sortChildren(sortZ);
+    }
+    function sortZ( a , b){		
+      return (a.zpos - b.zpos) * -1;
+    }
+  }
 </script>
 </head>
 
 <body onload="init();">	
-	<canvas id="canvas" width="990" height="600" style="background-color:#000"></canvas>			
+  <canvas id="canvas" width="990" height="600" style="background-color:#000"></canvas>
 </body>
 </html>
